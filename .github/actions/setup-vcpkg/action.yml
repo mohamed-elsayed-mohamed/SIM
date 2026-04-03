@@ -15,9 +15,14 @@ runs:
         elif [ -e "$VCPKG_ROOT" ]; then
           echo "Removing existing non-repo path at $VCPKG_ROOT"
           rm -rf "$VCPKG_ROOT"
-          git clone https://github.com/microsoft/vcpkg.git "$VCPKG_ROOT" --depth=1
+          git clone https://github.com/microsoft/vcpkg.git "$VCPKG_ROOT"
         else
-          git clone https://github.com/microsoft/vcpkg.git "$VCPKG_ROOT" --depth=1
+          git clone https://github.com/microsoft/vcpkg.git "$VCPKG_ROOT"
+        fi
+        # vcpkg manifest builtin-baseline resolves via git; shallow clones lack baseline commits.
+        if git -C "$VCPKG_ROOT" rev-parse --is-shallow-repository 2>/dev/null | grep -q true; then
+          echo "Unshallowing vcpkg clone for builtin-baseline resolution..."
+          git -C "$VCPKG_ROOT" fetch --unshallow
         fi
         "$VCPKG_ROOT/bootstrap-vcpkg.bat" -disableMetrics
         echo "VCPKG_ROOT=$VCPKG_ROOT" >> "$GITHUB_ENV"
