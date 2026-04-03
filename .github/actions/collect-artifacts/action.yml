@@ -43,6 +43,33 @@ runs:
           }
         }
 
+        # ProjectE — Unity plugin staging (always produced in CI: DLLs under Assets/Plugins)
+        $pluginsSrc = "ProjectE\Assets\Plugins"
+        $pluginsDst = Join-Path $outDir "ProjectE-Assets-Plugins"
+        if (Test-Path $pluginsSrc) {
+          New-Item -ItemType Directory -Force -Path $pluginsDst | Out-Null
+          Copy-Item "$pluginsSrc\*" $pluginsDst -Recurse -Force
+          Get-ChildItem $pluginsDst -Recurse -File | ForEach-Object {
+            $rel = $_.FullName.Substring($pluginsDst.Length).TrimStart('\')
+            $name = "ProjectE-Assets-Plugins\$rel"
+            Write-Host "[publish] Copied $name"
+            $published += $name
+          }
+        } else {
+          Write-Warning "[publish] Not found (skipping): $pluginsSrc"
+          $missing += $pluginsSrc
+        }
+
+        # ProjectE — optional Unity player build (local / self-hosted with Unity; skipped on windows-latest)
+        $unityRoot = "ProjectE\Builds\StandaloneWindows64"
+        $unityExe = Join-Path $unityRoot "ProjectE.exe"
+        if (Test-Path $unityExe) {
+          $unityDst = Join-Path $outDir "ProjectE-StandaloneWindows64"
+          Copy-Item $unityRoot $unityDst -Recurse -Force
+          Write-Host "[publish] Copied ProjectE-StandaloneWindows64\"
+          $published += "ProjectE-StandaloneWindows64/"
+        }
+
         $manifest = [ordered]@{
           version   = $version
           config    = $config
