@@ -74,7 +74,7 @@ RUN $env:Path = 'C:\Program Files\Git\cmd;' + $env:Path; `
     git config --global --add safe.directory '*'; `
     git clone https://github.com/microsoft/vcpkg.git C:\vcpkg; `
     Set-Location C:\vcpkg; `
-    git checkout 61d43ee6f0cc440dc97983d36e0c85e80fe429d4; `
+    git checkout e80346e570b767219f85dc95e3736853bfec3a70; `
     cmd /c bootstrap-vcpkg.bat -disableMetrics
 
 # ---------- Environment ----------
