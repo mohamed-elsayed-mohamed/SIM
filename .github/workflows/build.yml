@@ -62,7 +62,6 @@ jobs:
 
       - name: Push NuGet packages
         uses: ./.github/actions/push-nuget-packages
-        secrets: inherit
 
       - name: Upload CI artifact
         uses: ./.github/actions/upload-build-artifact

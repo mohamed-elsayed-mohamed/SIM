@@ -14,9 +14,7 @@ Multi-language build pipeline (C++ → C# → Unity) with VCPKG, NuGet, UPM, and
 
 ## 1. Architecture diagram
 
-**Visual UI (browser):** open [`docs/architecture.html`](docs/architecture.html) for the same workflow layout (ASCII + build tree + artifact targets).
-
-**§1** covers: **Dependency & data flow** (ASCII workflow below), **artifact repository targets** (table), then reference tables and **Pipeline detail** (`build.py` stage tree). The **resolve → compile → publish** order is in **Pipeline detail** and in `docs/architecture.html`.
+**§1** covers: **Dependency & data flow** (ASCII workflow below), **artifact repository targets** (table), then reference tables and **Pipeline detail** (`build.py` stage tree). The **resolve → compile → publish** order is in **Pipeline detail** below.
 
 ### 1.A Dependency & data flow (workflow)
 
@@ -206,6 +204,6 @@ Manifest mode is the [vcpkg-recommended approach](https://vcpkg.io/en/docs/maint
 
 | Section | Purpose |
 |---------|---------|
-| **§1** Architecture diagram | ASCII dependency workflow + artifact table; [`docs/architecture.html`](docs/architecture.html); pipeline stages in **Pipeline detail** |
+| **§1** Architecture diagram | ASCII dependency workflow + artifact table; pipeline stages in **Pipeline detail** |
 | Following §1 subsections | Tables: projects/managers, `build.py` stage list, CI vs local |
 | **§5** Brief documentation & talking points | **§5.1** design decisions, **§5.2** trade-offs, **§5.3** production path (short summaries + detail tables) |

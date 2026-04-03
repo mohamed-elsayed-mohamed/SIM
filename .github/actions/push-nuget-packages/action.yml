@@ -1,6 +1,6 @@
 # Push .nupkg to GitHub Packages (main push) and optional secondary feed (secrets).
 name: Push NuGet packages
-description: Publishes packed NuGet packages; requires secrets inherit for GITHUB_TOKEN and optional feed secrets.
+description: Publishes packed NuGet packages to GitHub Packages (and optional secondary feed when secrets are set).
 
 runs:
   using: composite
