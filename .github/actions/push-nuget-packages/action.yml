@@ -1,6 +1,20 @@
-# Push .nupkg to GitHub Packages (main push) and optional secondary feed (secrets).
+# Push .nupkg to GitHub Packages (main push) and optional secondary feed.
+# Secrets must be passed from the workflow — composite actions cannot use secrets.*.
 name: Push NuGet packages
-description: Publishes packed NuGet packages to GitHub Packages (and optional secondary feed when secrets are set).
+description: Publishes packed NuGet packages to GitHub Packages (and optional secondary feed when inputs are set).
+
+inputs:
+  github_token:
+    description: Token for GitHub Packages (pass secrets.GITHUB_TOKEN from the workflow)
+    required: true
+  nuget_feed_url:
+    description: Optional secondary NuGet feed URL
+    required: false
+    default: ""
+  nuget_feed_api_key:
+    description: Optional API key for the secondary feed
+    required: false
+    default: ""
 
 runs:
   using: composite
@@ -8,23 +22,25 @@ runs:
     - name: "[nuget] Push to GitHub Packages"
       if: github.event_name == 'push' && github.ref == 'refs/heads/main'
       shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github_token }}
       run: |
         set -euo pipefail
         shopt -s nullglob
         for f in ProjectC/bin/${{ env.BUILD_CONFIG }}/*.nupkg ProjectD/bin/${{ env.BUILD_CONFIG }}/*.nupkg; do
           echo "[nuget] Pushing $f -> GitHub Packages"
           dotnet nuget push "$f" \
-            --api-key "${{ secrets.GITHUB_TOKEN }}" \
+            --api-key "$GH_TOKEN" \
             --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
             --skip-duplicate
         done
 
     - name: "[nuget] Push to secondary NuGet feed"
-      if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.NUGET_FEED_URL != '' && secrets.NUGET_FEED_API_KEY != '' }}
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main' && inputs.nuget_feed_url != '' && inputs.nuget_feed_api_key != ''
       shell: bash
       env:
-        NUGET_FEED_URL: ${{ secrets.NUGET_FEED_URL }}
-        NUGET_FEED_API_KEY: ${{ secrets.NUGET_FEED_API_KEY }}
+        NUGET_FEED_URL: ${{ inputs.nuget_feed_url }}
+        NUGET_FEED_API_KEY: ${{ inputs.nuget_feed_api_key }}
       run: |
         set -euo pipefail
         shopt -s nullglob

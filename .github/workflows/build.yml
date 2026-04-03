@@ -62,6 +62,10 @@ jobs:
 
       - name: Push NuGet packages
         uses: ./.github/actions/push-nuget-packages
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          nuget_feed_url: ${{ secrets.NUGET_FEED_URL }}
+          nuget_feed_api_key: ${{ secrets.NUGET_FEED_API_KEY }}
 
       - name: Upload CI artifact
         uses: ./.github/actions/upload-build-artifact
