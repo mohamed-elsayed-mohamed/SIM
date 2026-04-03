@@ -6,11 +6,11 @@ runs:
   using: composite
   steps:
     - name: "[build] MSBuild ProjectA"
-      shell: bash
+      shell: pwsh
       run: |
-        msbuild ProjectA/ProjectA.sln \
-          /p:Configuration=${{ env.BUILD_CONFIG }} \
-          /p:Platform=${{ env.BUILD_PLATFORM }} \
+        msbuild ProjectA/ProjectA.sln `
+          /p:Configuration=${{ env.BUILD_CONFIG }} `
+          /p:Platform=${{ env.BUILD_PLATFORM }} `
           /m /nologo /verbosity:minimal
 
     - name: "[build] Stage ProjectA outputs for ProjectB linker"
@@ -27,9 +27,9 @@ runs:
         }
 
     - name: "[build] MSBuild ProjectB"
-      shell: bash
+      shell: pwsh
       run: |
-        msbuild ProjectB/ProjectB.sln \
-          /p:Configuration=${{ env.BUILD_CONFIG }} \
-          /p:Platform=${{ env.BUILD_PLATFORM }} \
+        msbuild ProjectB/ProjectB.sln `
+          /p:Configuration=${{ env.BUILD_CONFIG }} `
+          /p:Platform=${{ env.BUILD_PLATFORM }} `
           /m /nologo /verbosity:minimal
