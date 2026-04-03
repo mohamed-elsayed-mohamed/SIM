@@ -8,10 +8,20 @@ runs:
     - name: Bootstrap vcpkg
       shell: bash
       run: |
-        git clone https://github.com/microsoft/vcpkg.git C:/vcpkg --depth=1
-        C:/vcpkg/bootstrap-vcpkg.bat -disableMetrics
-        echo "VCPKG_ROOT=C:/vcpkg" >> $GITHUB_ENV
-        echo "C:/vcpkg" >> $GITHUB_PATH
+        set -euo pipefail
+        VCPKG_ROOT="C:/vcpkg"
+        if [ -d "$VCPKG_ROOT/.git" ]; then
+          echo "vcpkg already cloned at $VCPKG_ROOT"
+        elif [ -e "$VCPKG_ROOT" ]; then
+          echo "Removing existing non-repo path at $VCPKG_ROOT"
+          rm -rf "$VCPKG_ROOT"
+          git clone https://github.com/microsoft/vcpkg.git "$VCPKG_ROOT" --depth=1
+        else
+          git clone https://github.com/microsoft/vcpkg.git "$VCPKG_ROOT" --depth=1
+        fi
+        "$VCPKG_ROOT/bootstrap-vcpkg.bat" -disableMetrics
+        echo "VCPKG_ROOT=$VCPKG_ROOT" >> "$GITHUB_ENV"
+        echo "$VCPKG_ROOT" >> "$GITHUB_PATH"
 
     - name: Cache vcpkg installed packages
       uses: actions/cache@v4
