@@ -15,10 +15,9 @@ This is a DevOps Contractor Case Study implementing a multi-language build pipel
 ├── ProjectC/          # C# class library .NET (consumes ProjectB via interop) — NuGet
 ├── ProjectD/          # C# class library .NET (consumes ProjectC) — NuGet
 ├── ProjectE/          # Unity application (consumes ProjectD) — UPM or NuGet
-├── build.py           # Single entry point for the full pipeline
+├── Build/Python/build.py  # Single entry point for the full pipeline
 ├── build_config.json  # Optional config file for platform/configuration defaults
-└── docs/
-    └── architecture.md  # Design decisions, trade-offs, production path
+└── README.md            # Architecture, design decisions, trade-offs, production path
 ```
 
 Each project is a separate Visual Studio solution (`.sln`). Projects use "hello world" / pass-through logic — complexity is in the pipeline, not the application logic.
@@ -39,8 +38,8 @@ Project A (C++) → Project B (C++) → Project C (C#) → Project D (C#) → Pr
 ### Entry Point
 
 ```bash
-python build.py --config Release --version 1.0.0
-python build.py --config Debug --version 1.0.0 --platform x64
+python Build/Python/build.py --config Release --version 1.0.0
+python Build/Python/build.py --config Debug   --version 1.0.0 --platform x64
 ```
 
 ### Pipeline Order
@@ -69,7 +68,7 @@ The script executes these stages in order, halting with a non-zero exit code on 
 
 ## Key Design Decisions to Document
 
-The `docs/architecture.md` (or equivalent 1–2 page summary) must cover:
+The `README.md` architecture summary must cover:
 
 - Why manifest mode over classic mode for VCPKG
 - Chosen C++/C# interop approach (P/Invoke, C++/CLI, COM) and why

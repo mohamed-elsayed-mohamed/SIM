@@ -1,0 +1,37 @@
+# Push .nupkg to GitHub Packages (main push) and optional secondary feed (secrets).
+name: Push NuGet packages
+description: Publishes packed NuGet packages; requires secrets inherit for GITHUB_TOKEN and optional feed secrets.
+
+runs:
+  using: composite
+  steps:
+    - name: "[nuget] Push to GitHub Packages"
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      shell: bash
+      run: |
+        set -euo pipefail
+        shopt -s nullglob
+        for f in ProjectC/bin/${{ env.BUILD_CONFIG }}/*.nupkg ProjectD/bin/${{ env.BUILD_CONFIG }}/*.nupkg; do
+          echo "[nuget] Pushing $f -> GitHub Packages"
+          dotnet nuget push "$f" \
+            --api-key "${{ secrets.GITHUB_TOKEN }}" \
+            --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+            --skip-duplicate
+        done
+
+    - name: "[nuget] Push to secondary NuGet feed"
+      if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.NUGET_FEED_URL != '' && secrets.NUGET_FEED_API_KEY != '' }}
+      shell: bash
+      env:
+        NUGET_FEED_URL: ${{ secrets.NUGET_FEED_URL }}
+        NUGET_FEED_API_KEY: ${{ secrets.NUGET_FEED_API_KEY }}
+      run: |
+        set -euo pipefail
+        shopt -s nullglob
+        for f in ProjectC/bin/${{ env.BUILD_CONFIG }}/*.nupkg ProjectD/bin/${{ env.BUILD_CONFIG }}/*.nupkg; do
+          echo "[nuget] Pushing $f -> secondary NuGet feed"
+          dotnet nuget push "$f" \
+            --api-key "$NUGET_FEED_API_KEY" \
+            --source "$NUGET_FEED_URL" \
+            --skip-duplicate
+        done

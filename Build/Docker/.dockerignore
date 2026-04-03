@@ -1,0 +1,22 @@
+# Context is repo root
+.git
+.github
+**/.vs
+ProjectA/x64
+ProjectB/x64
+ProjectC/bin
+ProjectD/bin
+ProjectE/Library
+ProjectE/Temp
+ProjectE/Logs
+ProjectE/Builds
+artifacts
+.unity_plugin_staging
+Build/Docker/Output
+**/packages
+**/__pycache__
+*.log
+# Local vcpkg caches — container builds fresh via MSBuild integration
+**/vcpkg_installed
+# Local triplet with hardcoded SDK paths — container uses its own SDK
+vcpkg-triplets/x64-windows.cmake

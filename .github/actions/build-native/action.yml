@@ -1,0 +1,35 @@
+# MSBuild ProjectA → stage outputs for ProjectB → MSBuild ProjectB.
+name: Build native (C++)
+description: Builds ProjectA and ProjectB with the sibling-folder linker layout.
+
+runs:
+  using: composite
+  steps:
+    - name: "[build] MSBuild ProjectA"
+      shell: bash
+      run: |
+        msbuild ProjectA/ProjectA.sln \
+          /p:Configuration=${{ env.BUILD_CONFIG }} \
+          /p:Platform=${{ env.BUILD_PLATFORM }} \
+          /m /nologo /verbosity:minimal
+
+    - name: "[build] Stage ProjectA outputs for ProjectB linker"
+      shell: pwsh
+      run: |
+        $src = "ProjectA\${{ env.BUILD_PLATFORM }}\${{ env.BUILD_CONFIG }}"
+        $dst = "ProjectB\${{ env.BUILD_PLATFORM }}\${{ env.BUILD_CONFIG }}"
+        New-Item -ItemType Directory -Force -Path $dst | Out-Null
+        foreach ($f in @("ProjectA.dll", "ProjectA.lib")) {
+          if (Test-Path "$src\$f") {
+            Copy-Item "$src\$f" "$dst\$f" -Force
+            Write-Host "Copied $f -> $dst"
+          }
+        }
+
+    - name: "[build] MSBuild ProjectB"
+      shell: bash
+      run: |
+        msbuild ProjectB/ProjectB.sln \
+          /p:Configuration=${{ env.BUILD_CONFIG }} \
+          /p:Platform=${{ env.BUILD_PLATFORM }} \
+          /m /nologo /verbosity:minimal

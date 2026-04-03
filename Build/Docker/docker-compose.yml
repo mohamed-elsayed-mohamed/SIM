@@ -1,0 +1,23 @@
+# Windows containers only. From repo root:
+#   docker compose -f Build/Docker/docker-compose.yml up --build
+#
+# Artifacts appear under <repo-root>/artifacts on the host.
+
+services:
+  sim-build:
+    platform: windows/amd64
+    build:
+      # Paths are relative to this compose file; context must be repo root for COPY in Dockerfile.
+      context: ../..
+      dockerfile: Build/Docker/Dockerfile
+    volumes:
+      - type: bind
+        source: ../../artifacts
+        target: C:\out
+    environment:
+      OUT_ROOT: "C:\\out"
+      VERSION: "1.0.0"
+      BUILD_CONFIG: "Release"
+      BUILD_PLATFORM: "x64"
+      # Optional: mount Unity Editor and set, e.g. UNITY_EDITOR=C:\UnityEditor\Unity.exe
+      # UNITY_EDITOR: ""

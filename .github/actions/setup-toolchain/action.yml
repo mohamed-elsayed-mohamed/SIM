@@ -1,0 +1,14 @@
+# MSBuild + .NET SDK for C++ (MSBuild) and C# (dotnet) projects.
+name: Set up toolchain
+description: Installs MSBuild and .NET 8 for the SIM pipeline.
+
+runs:
+  using: composite
+  steps:
+    - name: Set up MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Set up .NET 8
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: "8.0.x"

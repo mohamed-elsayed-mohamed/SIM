@@ -1,0 +1,68 @@
+# =============================================================================
+# Build Pipeline — SIM multi-project (C++ → C# → Unity assets)
+# =============================================================================
+#
+# Orchestrator only: steps live in composite actions under .github/actions/*.
+# Flow: checkout → toolchain → vcpkg → deps → native → managed → pack →
+#       collect → nuget push → upload artifact
+#
+# Unity Editor build is skipped on windows-latest; DLLs go to ProjectE/Assets/Plugins.
+# NuGet push runs on push to main; optional secondary feed via NUGET_* secrets.
+#
+# =============================================================================
+
+name: Build Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  BUILD_CONFIG: Release
+  BUILD_PLATFORM: x64
+  VCPKG_DEFAULT_TRIPLET: x64-windows
+  VERSION: ${{ github.run_number }}
+  PKG_VERSION: 1.0.${{ github.run_number }}
+
+jobs:
+  build:
+    name: Build all projects
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up toolchain (MSBuild + .NET)
+        uses: ./.github/actions/setup-toolchain
+
+      - name: Set up vcpkg
+        uses: ./.github/actions/setup-vcpkg
+
+      - name: Resolve dependencies
+        uses: ./.github/actions/resolve-dependencies
+
+      - name: Build native (ProjectA, ProjectB)
+        uses: ./.github/actions/build-native
+
+      - name: Build managed + Unity plugin staging
+        uses: ./.github/actions/build-managed
+
+      - name: Pack NuGet packages
+        uses: ./.github/actions/pack-nuget-packages
+
+      - name: Collect artifacts
+        uses: ./.github/actions/collect-artifacts
+
+      - name: Push NuGet packages
+        uses: ./.github/actions/push-nuget-packages
+        secrets: inherit
+
+      - name: Upload CI artifact
+        uses: ./.github/actions/upload-build-artifact

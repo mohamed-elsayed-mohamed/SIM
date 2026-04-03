@@ -1,0 +1,56 @@
+# dotnet build C/D, copy ProjectC.dll for ProjectD, stage DLLs for Unity.
+name: Build managed (C#) and stage Unity plugins
+description: Builds ProjectC and ProjectD, copies interop/layout DLLs, fills ProjectE/Assets/Plugins.
+
+runs:
+  using: composite
+  steps:
+    - name: "[build] dotnet build ProjectC"
+      shell: bash
+      run: |
+        dotnet build ProjectC/ProjectC.sln \
+          -c ${{ env.BUILD_CONFIG }} \
+          --no-restore
+
+    - name: "[build] Copy ProjectC.dll for ProjectD"
+      shell: pwsh
+      run: |
+        $src = "ProjectC\bin\${{ env.BUILD_CONFIG }}\net8.0\ProjectC.dll"
+        $dst = "ProjectD\lib"
+        New-Item -ItemType Directory -Force -Path $dst | Out-Null
+        if (Test-Path $src) {
+          Copy-Item $src "$dst\ProjectC.dll" -Force
+          Write-Host "Copied ProjectC.dll -> $dst"
+        } else {
+          Write-Error "ProjectC.dll not found at $src"
+          exit 1
+        }
+
+    - name: "[build] dotnet build ProjectD"
+      shell: bash
+      run: |
+        dotnet build ProjectD/ProjectD.sln \
+          -c ${{ env.BUILD_CONFIG }} \
+          --no-restore
+
+    - name: "[unity] Copy DLLs to Assets/Plugins"
+      shell: pwsh
+      run: |
+        $plugins = "ProjectE\Assets\Plugins"
+        New-Item -ItemType Directory -Force -Path $plugins | Out-Null
+
+        $copies = @(
+          @{ Src = "ProjectA\${{ env.BUILD_PLATFORM }}\${{ env.BUILD_CONFIG }}\ProjectA.dll"; Dst = "$plugins\ProjectA.dll" },
+          @{ Src = "ProjectB\${{ env.BUILD_PLATFORM }}\${{ env.BUILD_CONFIG }}\ProjectB.dll"; Dst = "$plugins\ProjectB.dll" },
+          @{ Src = "ProjectC\bin\${{ env.BUILD_CONFIG }}\net8.0\ProjectC.dll";                Dst = "$plugins\ProjectC.dll" },
+          @{ Src = "ProjectD\bin\${{ env.BUILD_CONFIG }}\netstandard2.1\ProjectD.dll";        Dst = "$plugins\ProjectD.dll" }
+        )
+
+        foreach ($c in $copies) {
+          if (Test-Path $c.Src) {
+            Copy-Item $c.Src $c.Dst -Force
+            Write-Host "Copied $($c.Src) -> $($c.Dst)"
+          } else {
+            Write-Warning "Not found (skipping): $($c.Src)"
+          }
+        }

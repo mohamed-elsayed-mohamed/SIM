@@ -1,0 +1,8 @@
+{
+  "name": "projecta",
+  "version": "1.0.0",
+  "builtin-baseline": "61d43ee6f0cc440dc97983d36e0c85e80fe429d4",
+  "dependencies": [
+    "fmt"
+  ]
+}

@@ -1,0 +1,24 @@
+# vcpkg install (A, B) and dotnet restore (C, D).
+name: Resolve dependencies
+description: Installs C++ packages via vcpkg and restores NuGet for C# solutions.
+
+runs:
+  using: composite
+  steps:
+    - name: "[deps] vcpkg install — ProjectA"
+      shell: bash
+      run: vcpkg install
+      working-directory: ProjectA
+
+    - name: "[deps] vcpkg install — ProjectB"
+      shell: bash
+      run: vcpkg install
+      working-directory: ProjectB
+
+    - name: "[deps] dotnet restore — ProjectC"
+      shell: bash
+      run: dotnet restore ProjectC/ProjectC.sln
+
+    - name: "[deps] dotnet restore — ProjectD"
+      shell: bash
+      run: dotnet restore ProjectD/ProjectD.sln

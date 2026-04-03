@@ -1,0 +1,30 @@
+# dotnet pack SIM.ProjectC and SIM.ProjectD with PKG_VERSION / repo metadata.
+name: Pack NuGet packages
+description: Creates versioned .nupkg files for ProjectC and ProjectD.
+
+runs:
+  using: composite
+  steps:
+    - name: "[pack] dotnet pack ProjectC"
+      shell: bash
+      env:
+        REPO_URL: https://github.com/${{ github.repository }}
+      run: |
+        dotnet pack ProjectC/ProjectC.csproj \
+          -c ${{ env.BUILD_CONFIG }} \
+          --no-build \
+          -p:PackageVersion=${{ env.PKG_VERSION }} \
+          -p:RepositoryUrl="$REPO_URL" \
+          -p:PackageProjectUrl="$REPO_URL"
+
+    - name: "[pack] dotnet pack ProjectD"
+      shell: bash
+      env:
+        REPO_URL: https://github.com/${{ github.repository }}
+      run: |
+        dotnet pack ProjectD/ProjectD.csproj \
+          -c ${{ env.BUILD_CONFIG }} \
+          --no-build \
+          -p:PackageVersion=${{ env.PKG_VERSION }} \
+          -p:RepositoryUrl="$REPO_URL" \
+          -p:PackageProjectUrl="$REPO_URL"

@@ -1,0 +1,59 @@
+# Flatten DLLs + .nupkg into artifacts/<VERSION>/ and write manifest.json.
+name: Collect build artifacts
+description: Copies binaries and packages into a versioned folder with manifest.json.
+
+runs:
+  using: composite
+  steps:
+    - name: "[publish] Collect artifacts and write manifest"
+      shell: pwsh
+      run: |
+        $version  = "${{ env.VERSION }}"
+        $config   = "${{ env.BUILD_CONFIG }}"
+        $platform = "${{ env.BUILD_PLATFORM }}"
+        $outDir   = "artifacts\$version"
+        New-Item -ItemType Directory -Force -Path $outDir | Out-Null
+
+        $artifacts = @(
+          @{ Src = "ProjectA\$platform\$config\ProjectA.dll";             Name = "ProjectA.dll" },
+          @{ Src = "ProjectB\$platform\$config\ProjectB.dll";             Name = "ProjectB.dll" },
+          @{ Src = "ProjectC\bin\$config\net8.0\ProjectC.dll";            Name = "ProjectC.dll" },
+          @{ Src = "ProjectD\bin\$config\net8.0\ProjectD.dll";            Name = "ProjectD_net8.dll" },
+          @{ Src = "ProjectD\bin\$config\netstandard2.1\ProjectD.dll";    Name = "ProjectD_netstandard2.1.dll" }
+        )
+
+        $published = @()
+        $missing   = @()
+        foreach ($a in $artifacts) {
+          if (Test-Path $a.Src) {
+            Copy-Item $a.Src "$outDir\$($a.Name)" -Force
+            Write-Host "[publish] Copied $($a.Name)"
+            $published += $a.Name
+          } else {
+            Write-Warning "[publish] Not found (skipping): $($a.Src)"
+            $missing += $a.Src
+          }
+        }
+
+        foreach ($proj in @("ProjectC", "ProjectD")) {
+          Get-ChildItem "$proj\bin\$config\*.nupkg" -ErrorAction SilentlyContinue | ForEach-Object {
+            Copy-Item $_.FullName $outDir -Force
+            Write-Host "[publish] Copied $($_.Name)"
+            $published += $_.Name
+          }
+        }
+
+        $manifest = [ordered]@{
+          version   = $version
+          config    = $config
+          platform  = $platform
+          artifacts = $published
+        }
+        $manifest | ConvertTo-Json -Depth 3 | Set-Content "$outDir\manifest.json" -Encoding UTF8
+        Write-Host "[publish] Wrote manifest.json"
+
+        if ($missing.Count -gt 0) {
+          Write-Warning "[publish] $($missing.Count) artifact(s) were missing."
+        } else {
+          Write-Host "[publish] All artifacts published to $outDir"
+        }

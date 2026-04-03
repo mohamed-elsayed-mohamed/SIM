@@ -1,0 +1,32 @@
+# Clone/bootstrap vcpkg, cache manifest installs, integrate, overlay triplet.
+name: Set up vcpkg
+description: Bootstraps vcpkg, caches ProjectA/ProjectB installs, runs integrate and overlay triplet generation.
+
+runs:
+  using: composite
+  steps:
+    - name: Bootstrap vcpkg
+      shell: bash
+      run: |
+        git clone https://github.com/microsoft/vcpkg.git C:/vcpkg --depth=1
+        C:/vcpkg/bootstrap-vcpkg.bat -disableMetrics
+        echo "VCPKG_ROOT=C:/vcpkg" >> $GITHUB_ENV
+        echo "C:/vcpkg" >> $GITHUB_PATH
+
+    - name: Cache vcpkg installed packages
+      uses: actions/cache@v4
+      with:
+        path: |
+          ProjectA/vcpkg_installed
+          ProjectB/vcpkg_installed
+        key: vcpkg-${{ runner.os }}-${{ hashFiles('ProjectA/vcpkg.json', 'ProjectB/vcpkg.json') }}
+        restore-keys: |
+          vcpkg-${{ runner.os }}-
+
+    - name: vcpkg integrate install
+      shell: bash
+      run: vcpkg integrate install
+
+    - name: Generate vcpkg overlay triplet
+      shell: pwsh
+      run: python Build/Python/build.py --write-overlay-triplet

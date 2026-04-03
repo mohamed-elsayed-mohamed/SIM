@@ -1,0 +1,7 @@
+# DLLs are copied here by build.py publish stage:
+#   ProjectA.dll  (C++ — fmt)
+#   ProjectB.dll  (C++ — nlohmann-json, P/Invoke source)
+#   ProjectC.dll  (C# netstandard2.1 — Newtonsoft.Json)
+#   ProjectD.dll  (C# netstandard2.1 — Serilog)
+#
+# These files are generated artifacts and are NOT committed to source control.
