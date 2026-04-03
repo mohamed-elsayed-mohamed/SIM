@@ -8,7 +8,7 @@ Multi-language build pipeline (C++ → C# → Unity) with VCPKG, NuGet, UPM, and
 |------|----------------|----------------|
 | **Python (host)** | `python Build/Python/build.py …` (CLI args) or `RunBuild.bat` | Same pipeline on your machine; reads `build_config.json`; publishes to `artifacts/Python/<version>_<timestamp>/` with `manifest.json`. |
 | **Docker** | `RunDockerBuild.bat` → `docker compose -f Build/Docker/docker-compose.yml up --build` | Windows **containers** only (Docker Desktop → *Switch to Windows containers*); reproducible toolchain inside the image; artifacts under `./artifacts` (see script output). |
-| **GitHub Actions** | Push or PR to `main` runs `.github/workflows/build.yml` | Hosted CI: composite actions under `.github/actions/`; `artifacts/<run_number>/`, NuGet pack/push to GitHub Packages on **push to `main`** only; Unity player build skipped on `windows-latest` (DLLs still staged for ProjectE). |
+| **GitHub Actions** | Push or PR to `main` runs `.github/workflows/build.yml` | Hosted CI: composite actions under `.github/actions/`; `artifacts/<run_number>/`, NuGet pack/push to GitHub Packages on **push to `main`** only; **Unity player (`ProjectE.exe`) is not built** on default `windows-latest` (see below); DLLs are still staged under `ProjectE/Assets/Plugins`. |
 
 ---
 
@@ -103,9 +103,22 @@ python Build/Python/build.py --config Release --version 1.0.0
 | Publish output | `artifacts/Python/<version>_<timestamp>/` | `artifacts/<VERSION>/` (`VERSION` = `github.run_number`) |
 | NuGet packages | **`dotnet pack`** in `build.py` after compile (`PackageVersion` = `--version`) | CI: same → `1.0.<run_number>` → folder + push |
 | Remote feeds | N/A | **GitHub Packages** with `GITHUB_TOKEN`; optional **second feed** via `NUGET_FEED_URL` + `NUGET_FEED_API_KEY` |
-| Unity player | Built if Unity is detected | Skipped on `windows-latest`; DLLs still copied to `Assets/Plugins` |
+| Unity player | Built if Unity is detected | Not built on hosted `windows-latest` (no Unity Editor); DLLs still copied to `Assets/Plugins` |
 
 Upload: `actions/upload-artifact` publishes the CI `artifacts/<VERSION>/` folder (DLLs, `manifest.json`, `.nupkg` when present).
+
+#### Unity player (`ProjectE.exe`) and GitHub Actions
+
+**GitHub-hosted runners do not include the Unity Editor**, so the default workflow cannot run `Unity.exe -batchmode … -buildWindows64Player` to produce `ProjectE/Builds/StandaloneWindows64/ProjectE.exe`. That is why the downloadable CI artifact contains **staged plugins** (and A–D outputs) but **not** a standalone Windows player unless you add a separate Unity build path.
+
+**To produce `ProjectE.exe` inside GitHub Actions**, you must supply Unity and a **valid Unity license** in CI (same requirement as any headless/batch Unity build):
+
+| Requirement | Purpose |
+|---------------|---------|
+| **Unity license** | Activation is mandatory for the Editor in batch mode. You typically store a license (or activation credentials) as **encrypted repository or organization secrets**—for example when using **[game-ci/unity-builder](https://github.com/game-ci/unity-builder)** or similar actions. |
+| **Editor on the runner** | Either install Unity on a **self-hosted** Windows runner, or use a CI pattern that provisions the matching **Editor version** (e.g. `ProjectSettings/ProjectVersion.txt` → `2022.3.22f1`) and runs the same build line as `compile_stage.py` / Docker with `UNITY_EDITOR` set. |
+
+**Without** a license + Editor in CI, keep treating **`ProjectE.exe`** as coming from **local `build.py`**, **Docker with `UNITY_EDITOR`**, or a **self-hosted** agent—not from the stock hosted workflow alone.
 
 ---
 
@@ -179,7 +192,7 @@ Manifest mode is the [vcpkg-recommended approach](https://vcpkg.io/en/docs/maint
 #### CI/CD (current repo)
 
 - Workflow: `.github/workflows/build.yml` → `.github/actions/*`.
-- Runner: `windows-latest`; Unity **player** skipped in CI; plugin **staging** still runs.
+- Runner: `windows-latest`; Unity **player** (`.exe`) skipped unless you add a licensed Unity build (see **Unity player (`ProjectE.exe`) and GitHub Actions** above); plugin **staging** still runs.
 - `permissions`: `contents: read`, `packages: write` for NuGet push.
 - `actions/cache` on `vcpkg.json` for **vcpkg** trees.
 
@@ -190,7 +203,8 @@ Manifest mode is the [vcpkg-recommended approach](https://vcpkg.io/en/docs/maint
 | GitHub Packages from Actions | `GITHUB_TOKEN` (no extra secret) |
 | Second NuGet feed | `NUGET_FEED_URL`, `NUGET_FEED_API_KEY` in repo secrets |
 | Local dev, private feeds | `NuGet.Config` / environment variables |
-| Unity batch | License via Unity Hub before first CI headless use |
+| Unity player in GitHub Actions | **Unity license** (and Editor on the runner) via secrets + e.g. game-ci or self-hosted; hosted `windows-latest` alone cannot build `.exe` |
+| Unity batch (local / Docker) | License via Unity Hub before first headless use |
 | Config / credentials | Not committed in `build_config.json` |
 
 #### Parallelism & caching
